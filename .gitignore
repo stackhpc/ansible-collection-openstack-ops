@@ -20,3 +20,6 @@ cover/
 # Others
 .DS_Store
 .vimrc
+
+# Collection builds
+*.tar.gz
