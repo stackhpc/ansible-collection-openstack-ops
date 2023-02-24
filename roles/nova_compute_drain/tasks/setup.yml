@@ -1,6 +1,6 @@
 ---
 
-- name: Initiate openstack cli virtualenv
+- name: Initiate openstack cli virtualenv  # noqa package-latest
   pip:
     virtualenv: "{{ nova_compute_drain_venv }}"
     name:

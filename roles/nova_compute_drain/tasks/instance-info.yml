@@ -8,6 +8,7 @@
   register: instances
   delegate_to: "{{ nova_compute_drain_delegate_host }}"
   environment: "{{ openstack_auth_env }}"
+  changed_when: false
   vars:
     ansible_host: "{{ hostvars[nova_compute_drain_delegate_host].ansible_host }}"
 

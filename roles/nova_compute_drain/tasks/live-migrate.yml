@@ -1,6 +1,6 @@
 ---
 
-- name: "Live migrate instance: {{ instance_uuid }}"
+- name: "Live migrate instance: {{ instance_uuid }}"  # noqa no-changed-when
   command: >
     {{ nova_compute_drain_venv }}/bin/openstack
     --os-compute-api-version 2.25
