@@ -1,0 +1,15 @@
+---
+neutron_namespace_drain_venv: "{{ virtualenv_path }}/openstack"
+neutron_namespace_drain_host: >
+  {% if neutron_namespace_drain_ctrl1 | bool %}
+  {{ groups['controllers'][0] }}
+  {% elif neutron_namespace_drain_ctrl2 | bool %}
+  {{ groups['controllers'][1] }}
+  {% elif neutron_namespace_drain_ctrl3 | bool %}
+  {{ groups['controllers'][2] }}
+  {% endif %}
+neutron_namespace_drain_venv_python: "{{ 'python' ~ ansible_facts.python.version.major ~ '.' ~ ansible_facts.python.version.minor }}"
+neutron_namespace_drain_ctrl1: false
+neutron_namespace_drain_ctrl2: false
+neutron_namespace_drain_ctrl3: false
+neutron_namespace_drain_dhcp_agents: false

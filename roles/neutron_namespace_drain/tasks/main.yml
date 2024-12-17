@@ -1,0 +1,19 @@
+---
+- name: "Setup OpenStack venv"
+  ansible.builtin.import_tasks: setup.yml
+
+- name: "Drain L3 agents"
+  ansible.builtin.import_tasks: drain-l3.yml
+  when: maintenance | bool
+
+- name: "Enable L3 agent"
+  ansible.builtin.import_tasks: enable-l3.yml
+  when: not maintenance | bool
+
+- name: "Drain DHCP agents"
+  ansible.builtin.import_tasks: drain-dhcp.yml
+  when: maintenance | bool and neutron_namespace_drain_dhcp_agents | bool
+
+- name: "Add DHCP agents"
+  ansible.builtin.import_tasks: add-dhcp.yml
+  when: not maintenance | bool and neutron_namespace_drain_dhcp_agents | bool

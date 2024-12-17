@@ -1,0 +1,55 @@
+---
+- name: Query source SRC_DHCP_ID
+  ansible.builtin.command: >
+    {{ neutron_namespace_drain_venv }}/bin/openstack
+    network agent list --host {{ neutron_namespace_drain_host }}
+    --agent-type dhcp -f value -c ID
+  register: src_dhcp_id
+  environment: "{{ openstack_auth_env }}"
+  changed_when: false
+  delegate_to: "{{ neutron_namespace_drain_host }}"
+  vars:
+    ansible_host: "{{ hostvars[neutron_namespace_drain_host].ansible_host }}"
+
+- name: Set fact containing SRC_DHCP_ID
+  ansible.builtin.set_fact:
+    dhcp_src_id: "{{ src_dhcp_id.stdout }}"
+
+- name: Enable DHCP agent
+  ansible.builtin.command: >
+    {{ neutron_namespace_drain_venv }}/bin/openstack
+    network agent set "{{ dhcp_src_id }}" --enable
+  environment: "{{ openstack_auth_env }}"
+  changed_when: false
+  delegate_to: "{{ neutron_namespace_drain_host }}"
+  vars:
+    ansible_host: "{{ hostvars[neutron_namespace_drain_host].ansible_host }}"
+
+- name: Get Network IDs
+  ansible.builtin.command: >
+    {{ neutron_namespace_drain_venv }}/bin/openstack
+    network list -f value -c ID
+  register: network_ids
+  environment: "{{ openstack_auth_env }}"
+  changed_when: false
+  delegate_to: "{{ neutron_namespace_drain_host }}"
+  vars:
+    ansible_host: "{{ hostvars[neutron_namespace_drain_host].ansible_host }}"
+
+- name: Set Network IDs
+  ansible.builtin.set_fact:
+    network_id_list: "{{ network_ids.stdout_lines }}"
+
+- name: Add DHCP agent
+  ansible.builtin.command: >
+    {{ neutron_namespace_drain_venv }}/bin/openstack
+    network agent add network {{ dhcp_src_id }} {{ item }} --dhcp
+  environment: "{{ openstack_auth_env }}"
+  changed_when: false
+  delegate_to: "{{ neutron_namespace_drain_host }}"
+  vars:
+    ansible_host: "{{ hostvars[neutron_namespace_drain_host].ansible_host }}"
+  with_items:
+    - "{{ network_id_list }}"
+  loop_control:
+    pause: 10
