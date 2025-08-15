@@ -11,14 +11,10 @@
   vars:
     ansible_host: "{{ hostvars[neutron_namespace_drain_host].ansible_host }}"
 
-- name: Set fact containing SRC_L3_ID
-  ansible.builtin.set_fact:
-    l3_src_id: "{{ src_l3_id.stdout }}"
-
 - name: Enable L3 agent
   ansible.builtin.command: >
     {{ neutron_namespace_drain_venv }}/bin/openstack
-    network agent set "{{ l3_src_id }}" --enable
+    network agent set "{{ src_l3_id.stdout }}" --enable
   environment: "{{ openstack_auth_env }}"
   changed_when: false
   delegate_to: "{{ neutron_namespace_drain_host }}"

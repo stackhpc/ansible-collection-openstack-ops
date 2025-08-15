@@ -10,10 +10,6 @@
   vars:
     ansible_host: "{{ hostvars[neutron_namespace_drain_host].ansible_host }}"
 
-- name: Set fact containing SRC_L3_IDs
-  ansible.builtin.set_fact:
-    l3_ids: "{{ l3_id.stdout_lines }}"
-
 - name: Get agents for each router
   ansible.builtin.command: >
     {{ neutron_namespace_drain_venv }}/bin/openstack
@@ -29,7 +25,7 @@
   loop_control:
     loop_var: router_id
 
-- name: Add agent to router
+- name: Add router to agent
   ansible.builtin.command: >
     {{ neutron_namespace_drain_venv }}/bin/openstack
     network agent add router --l3 {{ l3_add }} {{ item.router_id }}
@@ -41,6 +37,6 @@
   delegate_to: "{{ neutron_namespace_drain_host }}"
   vars:
     ansible_host: "{{ hostvars[neutron_namespace_drain_host].ansible_host }}"
-    l3_add_diff: "{{ l3_ids | difference([l3_src_id]) | difference(item.stdout_lines) }}"
+    l3_add_diff: "{{ l3_id.stdout_lines | difference([l3_src_id]) | difference(item.stdout_lines) }}"
     l3_add: "{{ l3_add_diff[:1] | first }}"
   when: l3_add_diff | length > 0
