@@ -3,3 +3,4 @@ neutron_namespace_drain_venv: "{{ virtualenv_path }}/openstack"
 neutron_namespace_drain_host:
 neutron_namespace_drain_venv_python: "{{ 'python' ~ ansible_facts.python.version.major ~ '.' ~ ansible_facts.python.version.minor }}"
 neutron_namespace_drain_dhcp_agents: false
+neutron_namespace_play_host: "{{ neutron_namespace_drain_host }}"

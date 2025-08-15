@@ -7,9 +7,9 @@
   register: src_dhcp_id
   environment: "{{ openstack_auth_env }}"
   changed_when: false
-  delegate_to: "{{ neutron_namespace_drain_host }}"
+  delegate_to: "{{ neutron_namespace_play_host }}"
   vars:
-    ansible_host: "{{ hostvars[neutron_namespace_drain_host].ansible_host }}"
+    ansible_host: "{{ hostvars[neutron_namespace_play_host].ansible_host }}"
 
 - name: Enable DHCP agent
   ansible.builtin.command: >
@@ -17,9 +17,9 @@
     network agent set "{{ src_dhcp_id.stdout }}" --enable
   environment: "{{ openstack_auth_env }}"
   changed_when: false
-  delegate_to: "{{ neutron_namespace_drain_host }}"
+  delegate_to: "{{ neutron_namespace_play_host }}"
   vars:
-    ansible_host: "{{ hostvars[neutron_namespace_drain_host].ansible_host }}"
+    ansible_host: "{{ hostvars[neutron_namespace_play_host].ansible_host }}"
 
 - name: Get Network IDs
   ansible.builtin.command: >
@@ -28,9 +28,9 @@
   register: network_ids
   environment: "{{ openstack_auth_env }}"
   changed_when: false
-  delegate_to: "{{ neutron_namespace_drain_host }}"
+  delegate_to: "{{ neutron_namespace_play_host }}"
   vars:
-    ansible_host: "{{ hostvars[neutron_namespace_drain_host].ansible_host }}"
+    ansible_host: "{{ hostvars[neutron_namespace_play_host].ansible_host }}"
 
 - name: Add DHCP agent
   ansible.builtin.command: >
@@ -38,9 +38,9 @@
     network agent add network {{ src_dhcp_id.stdout }} {{ item }} --dhcp
   environment: "{{ openstack_auth_env }}"
   changed_when: false
-  delegate_to: "{{ neutron_namespace_drain_host }}"
+  delegate_to: "{{ neutron_namespace_play_host }}"
   vars:
-    ansible_host: "{{ hostvars[neutron_namespace_drain_host].ansible_host }}"
+    ansible_host: "{{ hostvars[neutron_namespace_play_host].ansible_host }}"
   with_items:
     - "{{ network_ids.stdout_lines }}"
   loop_control:
