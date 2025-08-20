@@ -35,20 +35,6 @@
     - "{{ dhcp_agent_ids.stdout_lines }}"
 
 - name: Wait for no more dhcp agents to be attached to the host
-<<<<<<< Updated upstream
-  ansible.builtin.command: >
-    {{ neutron_namespace_drain_venv }}/bin/openstack
-    network list --agent {{ dhcp_src_id }} -f value -c ID
-  environment: "{{ openstack_auth_env }}"
-  changed_when: false
-  delegate_to: "{{ neutron_namespace_drain_host }}"
-  vars:
-    ansible_host: "{{ hostvars[neutron_namespace_drain_host].ansible_host }}"
-  register: agent_status
-  failed_when: agent_status.stdout | length > 0
-  retries: 20
-  delay: 5
-=======
   block:
     - name: Retry count
       ansible.builtin.set_fact:
@@ -86,7 +72,6 @@
         retry_count: reset
       failed_when: retry_count == 'reset'
       when: retry_count | int >= max_retries | int
->>>>>>> Stashed changes
 
 - name: Disable DHCP agent
   ansible.builtin.command: >
