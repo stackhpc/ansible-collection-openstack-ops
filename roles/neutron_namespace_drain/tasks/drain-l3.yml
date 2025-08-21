@@ -23,6 +23,10 @@
   vars:
     ansible_host: "{{ hostvars[neutron_namespace_play_host].ansible_host }}"
 
+- name: Setting router ids
+  ansible.builtin.set_fact:
+    router_ids: "{{ get_router_ids.stdout_lines }}"
+    
 - name: Add agents to router
   ansible.builtin.include_tasks: add-new-l3.yml
   when: router_ids | length > 0
