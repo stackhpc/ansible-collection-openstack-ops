@@ -1,5 +1,6 @@
 ---
 - name: Query source SRC_L3_ID
+  become: true
   ansible.builtin.command: >
     {{ neutron_namespace_drain_venv }}/bin/openstack
     network agent list --host {{ neutron_namespace_drain_host }}
