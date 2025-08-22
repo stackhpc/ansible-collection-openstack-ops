@@ -1,0 +1,92 @@
+---
+- name: Query source SRC_L3_ID
+  ansible.builtin.command: >
+    {{ neutron_namespace_drain_venv }}/bin/openstack
+    network agent list --host {{ neutron_namespace_drain_host }}
+    --agent-type l3 -f value -c ID
+  register: src_l3_id
+  environment: "{{ openstack_auth_env }}"
+  changed_when: false
+  delegate_to: "{{ neutron_namespace_play_host }}"
+  vars:
+    ansible_host: "{{ hostvars[neutron_namespace_play_host].ansible_host }}"
+
+- name: Get Router IDs
+  ansible.builtin.command: >
+    {{ neutron_namespace_drain_venv }}/bin/openstack
+    router list --agent {{ src_l3_id.stdout }} -f value -c ID
+  register: router_ids
+  environment: "{{ openstack_auth_env }}"
+  changed_when: false
+  delegate_to: "{{ neutron_namespace_play_host }}"
+  vars:
+    ansible_host: "{{ hostvars[neutron_namespace_play_host].ansible_host }}"
+
+- name: Setting router ids
+  ansible.builtin.set_fact:
+    router_ids: "{{ router_ids.stdout_lines }}"
+    
+- name: Add agents to router
+  ansible.builtin.include_tasks: add-new-l3.yml
+  when: router_ids | length > 0
+
+- name: Remove router
+  ansible.builtin.command: >
+    {{ neutron_namespace_drain_venv }}/bin/openstack
+    network agent remove router {{ src_l3_id.stdout }} {{ item }} --l3
+  environment: "{{ openstack_auth_env }}"
+  changed_when: false
+  delegate_to: "{{ neutron_namespace_play_host }}"
+  vars:
+    ansible_host: "{{ hostvars[neutron_namespace_play_host].ansible_host }}"
+  with_items:
+    - "{{ router_ids }}"
+
+- name: Wait for no more routers to be attached to the host
+  block:
+    - name: Retry count
+      ansible.builtin.set_fact:
+        retry_count: "{{ 0 if retry_count is undefined or retry_count == 'reset' else retry_count | int + 1 }}"
+        max_retries: 20
+
+    - name: Verify routers exist
+      ansible.builtin.command: >
+        {{ neutron_namespace_drain_venv }}/bin/openstack router list --agent {{ src_l3_id.stdout }} -f value -c ID
+      environment: "{{ openstack_auth_env }}"
+      changed_when: false
+      delegate_to: "{{ neutron_namespace_play_host }}"
+      register: agent_status
+      vars:
+        ansible_host: "{{ hostvars[neutron_namespace_play_host].ansible_host }}"
+
+    - name: Fail if routers still attached
+      ansible.builtin.fail:
+        msg: a Router is still attached to agent "{{ src_l3_id.stdout }}"
+      when: agent_status.stdout | length > 0
+
+    - name: Reset retry count after success
+      ansible.builtin.set_fact:
+        retry_count: reset
+  rescue:
+    - name: Fail if maximum retries are exceeded
+      ansible.builtin.fail:
+        msg: |
+          Maximum retries waiting for routers to be detached reached
+      when: retry_count | int == max_retries
+
+    - name: Reset retry counter if max retries reached (exit loop)
+      ansible.builtin.set_fact:
+        retry_count: reset
+      failed_when: retry_count == 'reset'
+      when: retry_count | int >= max_retries | int
+
+- name: Disable L3 agent
+  ansible.builtin.command: >
+    {{ neutron_namespace_drain_venv }}/bin/openstack
+    network agent set "{{ src_l3_id.stdout }}" --disable
+  environment: "{{ openstack_auth_env }}"
+  changed_when: false
+  delegate_to: "{{ neutron_namespace_play_host }}"
+  when: agent_status.stdout | length == 0
+  vars:
+    ansible_host: "{{ hostvars[neutron_namespace_play_host].ansible_host }}"

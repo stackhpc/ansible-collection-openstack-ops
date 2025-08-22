@@ -1,0 +1,42 @@
+---
+- name: Query L3_IDs
+  ansible.builtin.command: >
+    {{ neutron_namespace_drain_venv }}/bin/openstack
+    network agent list --agent-type l3 -f value -c ID
+  register: l3_id
+  environment: "{{ openstack_auth_env }}"
+  changed_when: false
+  delegate_to: "{{ neutron_namespace_play_host }}"
+  vars:
+    ansible_host: "{{ hostvars[neutron_namespace_play_host].ansible_host }}"
+
+- name: Get agents for each router
+  ansible.builtin.command: >
+    {{ neutron_namespace_drain_venv }}/bin/openstack
+    network agent list --router {{ router_id }} --agent-type l3 -f value -c ID
+  environment: "{{ openstack_auth_env }}"
+  changed_when: false
+  delegate_to: "{{ neutron_namespace_play_host }}"
+  failed_when: false
+  register: router_l3_ids
+  vars:
+    ansible_host: "{{ hostvars[neutron_namespace_play_host].ansible_host }}"
+  loop: "{{ router_ids }}"
+  loop_control:
+    loop_var: router_id
+
+- name: Add router to agent
+  ansible.builtin.command: >
+    {{ neutron_namespace_drain_venv }}/bin/openstack
+    network agent add router --l3 {{ l3_add }} {{ item.router_id }}
+  loop: "{{ router_l3_ids.results }}"
+  loop_control:
+    label: "{{ item.router_id }}"
+  environment: "{{ openstack_auth_env }}"
+  changed_when: false
+  delegate_to: "{{ neutron_namespace_play_host }}"
+  vars:
+    ansible_host: "{{ hostvars[neutron_namespace_play_host].ansible_host }}"
+    l3_add_diff: "{{ l3_id.stdout_lines | difference([l3_src_id]) | difference(item.stdout_lines) }}"
+    l3_add: "{{ l3_add_diff[:1] | first }}"
+  when: l3_add_diff | length > 0
