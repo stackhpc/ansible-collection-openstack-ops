@@ -11,6 +11,10 @@
   vars:
     ansible_host: "{{ hostvars[neutron_namespace_play_host].ansible_host }}"
 
+- name: Set fact containing src_l3_id
+  set_fact:
+    l3_src_id: "{{ src_l3_id.stdout }}"
+
 - name: Get Router IDs
   ansible.builtin.command: >
     {{ neutron_namespace_drain_venv }}/bin/openstack
