@@ -54,7 +54,7 @@
 
     - name: Fail if DHCP agent still attached
       ansible.builtin.fail:
-        msg: a DHCP agent is still attached to "{{ l3_src_id }}"
+        msg: a DHCP agent is still attached to "{{ src_l3_id }}"
       when: agent_status.stdout | length > 0
 
     - name: Reset retry count after success

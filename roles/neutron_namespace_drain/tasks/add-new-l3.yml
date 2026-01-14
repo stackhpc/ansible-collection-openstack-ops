@@ -37,6 +37,6 @@
   delegate_to: "{{ neutron_namespace_play_host }}"
   vars:
     ansible_host: "{{ hostvars[neutron_namespace_play_host].ansible_host }}"
-    l3_add_diff: "{{ l3_id.stdout_lines | difference([l3_src_id]) | difference(item.stdout_lines) }}"
+    l3_add_diff: "{{ l3_id.stdout_lines | difference([src_l3_id]) | difference(item.stdout_lines) }}"
     l3_add: "{{ l3_add_diff[:1] | first }}"
   when: l3_add_diff | length > 0
